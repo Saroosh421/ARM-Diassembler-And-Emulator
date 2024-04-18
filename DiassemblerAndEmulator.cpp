@@ -1,5 +1,6 @@
 #include<iostream>
 #include <string>
+#include <cstring>
 #include <cmath>
 #include <iomanip>
 using namespace std;
@@ -33,20 +34,131 @@ int binToDec(int bin_arr[], int size){
     return dec;
 }
 
+// function to convert deciaml to hexadecimal
+string decToHex(int dec){
+    string hex = "";
+    while (dec != 0){
+        int rem = dec % 16;
+        if (rem < 10){
+            hex = to_string(rem) + hex;
+        }
+        else{
+            hex = (char)(rem + 55) + hex;
+        }
+        dec = dec / 16;
+    }
+    return hex;
+}
+
+//function to perform hexadecimal addition
+string hexAddition(string& hex1, string& hex2) {
+    // Convert hexadecimal strings to integers
+    stringstream ss1, ss2;
+    ss1 << std::hex << hex1;
+    ss2 << std::hex << hex2;
+    unsigned int num1, num2;
+    ss1 >> num1;
+    ss2 >> num2;
+
+    // Perform addition
+    unsigned int sum = num1 + num2;
+
+    // Convert sum back to hexadecimal string
+    stringstream result_ss;
+    result_ss << hex << sum;
+    string result = result_ss.str();
+
+    return result;
+}
+
+
+// function to perform hexadecimal subtraction
+string hexSubtraction(string& hex1, const string& hex2) {
+    // Convert hexadecimal strings to integers
+    stringstream ss1, ss2;
+    ss1 << hex << hex1;
+    ss2 << hex << hex2;
+    unsigned int num1, num2;
+    ss1 >> num1;
+    ss2 >> num2;
+
+    // Perform subtraction
+    unsigned int difference = num1 - num2;
+
+    // Convert difference back to hexadecimal string
+    stringstream result_ss;
+    result_ss << hex << difference;
+    string result = result_ss.str();
+
+    return result;
+}
+
+
 // function to set initialize values of register
-void setRegisters(WORD registers[15]){
+void setRegisters(string registers[15]){
     for (int i = 0; i < 16; i++){
-        registers[i] = 0x00000000;
+        registers[i] = "00000000";
     }
 }
 
 // function to print content of registers
-void printRegisters(WORD registers[15]){
+void printRegisters(string registers[15]){
     cout << "Current state of registers: " <<endl;
     for (int i = 0; i < 16; i++){
-        cout << "r" << i << ": " << setfill('0') << setw(8) << registers[i] << endl;
+        cout << "r" << i << ": " << registers[i] << endl;
     }
     cout << endl;
+}
+
+// MOV instruction implementation
+void MOV(string destReg, string operand, string registers[16]){
+    string hexVal = "";
+    string desRegInd = destReg.substr(1);
+    int desRegIndex = stoi(desRegInd);
+    int op = stoi(operand);
+    hexVal = decToHex(op);
+    for (int i = hexVal.length(); i < 8; i++){
+        hexVal = "0" + hexVal;
+    }
+    registers[desRegIndex] = hexVal;
+    printRegisters(registers);
+}
+
+// ADD instruction implementation
+void ADD(string destReg, string sourceReg, string operand, string registers[16]){
+    int op = stoi(operand);
+    string hexOp = decToHex(op);
+    string sourceRegInd = sourceReg.substr(1);
+    int sourceRegIndex = stoi(sourceRegInd);
+    string sourceRegValue = registers[sourceRegIndex];
+    string hexAdd = hexAddition(sourceRegValue, hexOp);
+
+    string hexVal = "";
+    string desRegInd = destReg.substr(1);
+    int desRegIndex = stoi(desRegInd);
+    for (int i = hexAdd.length(); i < 8; i++){
+        hexAdd = "0" + hexAdd;
+    }
+    registers[desRegIndex] = hexAdd;
+    printRegisters(registers);
+}
+
+void SUB(string destReg, string sourceReg, string operand, string registers[16]){
+    int op = stoi(operand);
+    string hexOp = decToHex(op);
+    string sourceRegInd = sourceReg.substr(1);
+    int sourceRegIndex = stoi(sourceRegInd);
+    string sourceRegValue = registers[sourceRegIndex];
+    string hexSub = hexSubtraction(sourceRegValue, hexOp);
+
+    string hexVal = "";
+    string desRegInd = destReg.substr(1);
+    int desRegIndex = stoi(desRegInd);
+    for (int i = hexSub.length(); i < 8; i++){
+        hexSub = "0" + hexSub;
+    }
+    registers[desRegIndex] = hexSub;
+    printRegisters(registers);
 }
 
 
@@ -127,10 +239,10 @@ int main(){
     int opCode_arr[4];
     string destReg_str, sourceReg_str, operand_str;
     int destReg_arr[4], sourceReg_arr[4], operand_arr[12];
-    string destReg[15], sourceReg[15];
-    WORD registers[15];
+    string destReg[16], sourceReg[16];
+    string registers[16];
     string genOpCode = "";
-    WORD instruction = 0xE0802001;
+    WORD instruction = 0xE2433001;
 
     string opCode[16];
     opCode[0] = "AND";
@@ -203,6 +315,10 @@ int main(){
     setRegisters(registers);
     printRegisters(registers);
 
+    //MOV(destReg_str, operand_str, registers);
+    //ADD(destReg_str, sourceReg_str, operand_str, registers);
+    SUB(destReg_str, sourceReg_str, operand_str, registers);
+
 }
 
 // E3 A0 00 01 MOV r0,#1
@@ -220,3 +336,8 @@ int main(){
 // E1 A0 00 02 MOV r0,#2
 // E1 A0 10 03 MOV r1,#3
 // E0 80 20 01 ADD r2,r0,r1
+// MOV r0, r1 0xE1A00001
+// MOV r2, 4 0xE3A02004
+// SUB r2, r2, 1 0xE2412001
+// ADD r2, r2, 15 0xE282200F
+// SUB r3, r3, 1 0xE2433001
