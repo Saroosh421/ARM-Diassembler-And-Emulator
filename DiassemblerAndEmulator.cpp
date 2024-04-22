@@ -103,7 +103,7 @@ void setRegisters(string registers[15]){
 
 // function to print content of registers
 void printRegisters(string registers[15]){
-    cout << "Current state of registers: " <<endl;
+    cout << "\nCurrent state of registers: " <<endl;
     for (int i = 0; i < 16; i++){
         cout << "r" << i << ": " << registers[i] << endl;
     }
@@ -143,6 +143,7 @@ void ADD(string destReg, string sourceReg, string operand, string registers[16])
     printRegisters(registers);
 }
 
+// SUB instruction implementation
 void SUB(string destReg, string sourceReg, string operand, string registers[16]){
     int op = stoi(operand);
     string hexOp = decToHex(op);
@@ -161,74 +162,155 @@ void SUB(string destReg, string sourceReg, string operand, string registers[16])
     printRegisters(registers);
 }
 
+// CMP instruction implementation
+void CMP(string destReg, string sourceReg, string operand, string registers[16]){
+    int op = stoi(operand);
+    string hexOp = decToHex(op);
+    string sourceRegInd = sourceReg.substr(1);
+    int sourceRegIndex = stoi(sourceRegInd);
+    string sourceRegValue = registers[sourceRegIndex];
+    string hexSub = hexSubtraction(sourceRegValue, hexOp);
 
-string Decoder(string opCode, string destReg, string sourceReg, string operand){
+    for (int i = hexSub.length(); i < 8; i++){
+        hexSub = "0" + hexSub;
+    }
+    cout << "CMP: " << hexSub << endl;
+}
+
+
+void Decoder(string opCode, string destReg, string sourceReg, string operand, bool isRegister, string registers[16]){
     string decodedInstruct = "";
     if (opCode == "AND"){
         //AND(destReg, sourceReg, operand);
-        decodedInstruct = "AND " + destReg + ", " + sourceReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "AND " + destReg + ", " + sourceReg + ", r" + operand;
+        else
+            decodedInstruct = "AND " + destReg + ", " + sourceReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
     else if (opCode == "EOR"){
         //EOR(destReg, sourceReg, operand);
-        decodedInstruct = "EOR " + destReg + ", " + sourceReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "EOR " + destReg + ", " + sourceReg + ", r" + operand;
+        else
+            decodedInstruct = "EOR " + destReg + ", " + sourceReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
     else if (opCode == "SUB"){
         //SUB(destReg, sourceReg, operand);
-        decodedInstruct = "SUB " + destReg + ", " + sourceReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "SUB " + destReg + ", " + sourceReg + ", r" + operand;
+        else
+            decodedInstruct = "SUB " + destReg + ", " + sourceReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
+        SUB(destReg, sourceReg, operand, registers);
     }
     else if (opCode == "RSB"){
         //RSB(destReg, sourceReg, operand);
-        decodedInstruct = "RSB " + destReg + ", " + sourceReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "RSB " + destReg + ", " + sourceReg + ", r" + operand;
+        else
+            decodedInstruct = "RSB " + destReg + ", " + sourceReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
     else if (opCode == "ADD"){
         //ADD(destReg, sourceReg, operand);
-        decodedInstruct = "ADD " + destReg + ", " + sourceReg + ", " + operand;
-        return decodedInstruct;
+        if (isRegister)
+            decodedInstruct = "ADD " + destReg + ", " + sourceReg + ", r" + operand;
+        else
+            decodedInstruct = "ADD " + destReg + ", " + sourceReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
+        ADD(destReg, sourceReg, operand, registers);
     }
     else if (opCode == "ADC"){
         //ADC(destReg, sourceReg, operand);
-        decodedInstruct = "ADC " + destReg + ", " + sourceReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "ADC " + destReg + ", " + sourceReg + ", r" + operand;
+        else
+            decodedInstruct = "ADC " + destReg + ", " + sourceReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
     else if (opCode == "SBC"){
         //SBC(destReg, sourceReg, operand);
-        decodedInstruct = "SBC " + destReg + ", " + sourceReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "SBC " + destReg + ", " + sourceReg + ", r" + operand;
+        else
+            decodedInstruct = "SBC " + destReg + ", " + sourceReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
     else if (opCode == "RSC"){
         //RSC(destReg, sourceReg, operand);
-        decodedInstruct = "RSC " + destReg + ", " + sourceReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "RSC " + destReg + ", " + sourceReg + ", r" + operand;
+        else
+            decodedInstruct = "RSC " + destReg + ", " + sourceReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
     else if (opCode == "TST"){
         //TST(destReg, sourceReg, operand);
-        decodedInstruct = "TST " + destReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "TST " + destReg + ", r" + operand;
+        else
+            decodedInstruct = "TST " + destReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
     else if (opCode == "TEQ"){
         //TEQ(destReg, sourceReg, operand);
-        decodedInstruct = "TEQ " + destReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "TEQ " + destReg + ", r" + operand;
+        else
+            decodedInstruct = "TEQ " + destReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
     else if (opCode == "CMP"){
         //CMP(destReg, sourceReg, operand);
-        decodedInstruct = "CMP " + destReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "CMP " + sourceReg + ", r" + operand;
+        else
+            decodedInstruct = "CMP " + sourceReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
+        CMP(destReg, sourceReg, operand, registers);
     }
     else if (opCode == "CMN"){
         //CMN(destReg, sourceReg, operand);
-        decodedInstruct = "CMN " + destReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "CMN " + destReg + ", r" + operand;
+        else
+            decodedInstruct = "CMN " + destReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
     else if (opCode == "ORR"){
         //ORR(destReg, sourceReg, operand);
-        decodedInstruct = "ORR " + destReg + ", " + sourceReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "ORR " + destReg + ", " + sourceReg + ", r" + operand;
+        else
+            decodedInstruct = "ORR " + destReg + ", " + sourceReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
     else if (opCode == "MOV"){
         //MOV(destReg, sourceReg, operand);
-        decodedInstruct = "MOV " + destReg + ", " + operand;
-        return decodedInstruct;
+        if (isRegister)
+            decodedInstruct = "MOV " + destReg + ", r" + operand;
+        else
+            decodedInstruct = "MOV " + destReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
+        MOV(destReg, operand, registers);
     }
     else if (opCode == "BIC"){
         //BIC(destReg, sourceReg, operand);
-        decodedInstruct = "BIC " + destReg + ", " + sourceReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "BIC " + destReg + ", " + sourceReg + ", r" + operand;
+        else
+            decodedInstruct = "BIC " + destReg + ", " + sourceReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
     else if (opCode == "MVN"){
         //MVN(destReg, sourceReg, operand);
-        decodedInstruct = "MVN " + destReg + ", " + operand;
+        if (isRegister)
+            decodedInstruct = "MVN " + destReg + ", r" + operand;
+        else
+            decodedInstruct = "MVN " + destReg + ", #" + operand;
+        cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
 
 }
@@ -241,8 +323,9 @@ int main(){
     int destReg_arr[4], sourceReg_arr[4], operand_arr[12];
     string destReg[16], sourceReg[16];
     string registers[16];
-    string genOpCode = "";
-    WORD instruction = 0xE2433001;
+    string genOpCode = "", decodedInstruct = "";
+    WORD instruction = 0xE1A00001;
+    bool isRegister = false;
 
     string opCode[16];
     opCode[0] = "AND";
@@ -266,7 +349,7 @@ int main(){
         destReg[i] = "r" + to_string(i);
         sourceReg[i] = "r" + to_string(i);
     }
-    string temp = "";
+    //string temp = "";
 
     hexToBin(instruction, instruct_arr);
 
@@ -275,6 +358,15 @@ int main(){
         cout << instruct_arr[i];
     }
     cout << endl;
+
+    // extracting immediate bit from instruction
+
+    if (instruct_arr[6] == 0){
+        isRegister = true;
+    }
+    else{
+        isRegister = false;
+    }
 
     // extracting opCode from instruction
     for (int i = 0, j = 7; i < 4; i++, j++){
@@ -309,22 +401,17 @@ int main(){
 
     //cout << "Operand is: " << operand_str << endl;
 
-    temp = Decoder(genOpCode, destReg_str, sourceReg_str, operand_str);
-    cout << temp << endl;
-
     setRegisters(registers);
     printRegisters(registers);
 
-    //MOV(destReg_str, operand_str, registers);
-    //ADD(destReg_str, sourceReg_str, operand_str, registers);
-    SUB(destReg_str, sourceReg_str, operand_str, registers);
+    Decoder(genOpCode, destReg_str, sourceReg_str, operand_str, isRegister, registers);
 
 }
 
-// E3 A0 00 01 MOV r0,#1
-// E3 A0 10 02 MOV r1,#2
-// E0 80 20 01 ADD r2,r0,r1
-// E2 82 20 05 ADD r2,r2,#5
+// E3A00001 MOV r0,#1
+// E3A01002 MOV r1,#2
+// E0802001 ADD r2,r0,r1
+// E2822005 ADD r2,r2,#5
 // E1 A0 00 02 MOV r0,#2
 // E1 A0 10 03 MOV r1,#3
 // E0 80 20 01 ADD r2,r0,r1
@@ -341,3 +428,13 @@ int main(){
 // SUB r2, r2, 1 0xE2412001
 // ADD r2, r2, 15 0xE282200F
 // SUB r3, r3, 1 0xE2433001
+// SUB r3, r2, r1 0xE2423001
+// CMP r2, r1 0xE1520001
+// CMP r0, r1 0xE1500001
+// CMP r1, r2 0xE1521002
+// CMP r2, 1 0xE3522001
+// CMP r1, 2 0xE3521002
+// CMP r0, 15 0xE350000F
+// B and BL instructions
+// B 0xEA000000
+// BL 0xEB000000
