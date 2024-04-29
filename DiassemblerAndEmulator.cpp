@@ -71,6 +71,41 @@ string hexAddition(string& hex1, string& hex2) {
     return result;
 }
 
+// Function to compare two hexadecimal numbers
+bool compareHexStrings(string& hex1, string& hex2) {
+    // Convert hexadecimal strings to integers
+    stringstream ss1, ss2;
+    ss1 << hex << hex1;
+    ss2 << hex << hex2;
+    unsigned int num1, num2;
+    ss1 >> num1;
+    ss2 >> num2;
+
+    // Compare the integers
+    if (num1 > num2)
+        return true; // hex1 is greater
+    else
+        return false; // hex2 is greater
+}
+
+bool compareHexStringsSub(string& hex1, string& hex2) {
+    // Convert hexadecimal strings to integers
+    stringstream ss1, ss2;
+    ss1 << hex << hex1;
+    ss2 << hex << hex2;
+    unsigned int num1, num2;
+    ss1 >> num1;
+    ss2 >> num2;
+
+    // Compare the integers
+    if (num1 > num2)
+        return true; // hex1 is greater
+    else if (num1 == num2)
+        return true;
+    else
+        return false; // hex2 is greater
+}
+
 
 // function to perform hexadecimal subtraction
 string hexSubtraction(string& hex1, const string& hex2) {
@@ -93,6 +128,55 @@ string hexSubtraction(string& hex1, const string& hex2) {
     return result;
 }
 
+// Check zero flag
+bool zeroFlag(string destReg){
+    if (destReg == "00000000"){
+        return true;
+    }
+    return false;
+}
+
+// Check negative flag
+bool negativeFlag(string destReg){
+    if (destReg[0] != '0'){
+        return true;
+    }
+    return false;
+}
+
+// Check carry flag for addition
+bool carryFlagAdd(string destReg, string sourceReg, string operand){
+    if (compareHexStrings(destReg, sourceReg)){
+        if (compareHexStrings(destReg, operand))
+            return false;
+    }
+    return true;
+}
+
+// Check overflow flag for addition
+bool overflowFlagAdd(string destReg, string sourceReg, string operand){
+    if (sourceReg[0] == operand[0]){
+        if (destReg[0] != sourceReg[0])
+            return true;
+    }
+    return false;
+}
+
+// Check carry flag for subtraction
+bool carryFlagSub(string destReg, string sourceReg, string operand){
+    if (compareHexStringsSub(sourceReg, operand))
+        return true;
+    return false;
+}
+
+// Check overflow flag for subtraction
+bool overflowFlagSub(string destReg, string sourceReg, string operand){
+    if (sourceReg[0] != operand[0]){
+        if (destReg[0] != sourceReg[0])
+            return true;
+    }
+    return false;
+}
 
 // function to set initialize values of register
 void setRegisters(string registers[15]){
@@ -141,6 +225,14 @@ void ADD(string destReg, string sourceReg, string operand, string registers[16])
     }
     registers[desRegIndex] = hexAdd;
     printRegisters(registers);
+
+    // check flags
+    /*
+    cout << "Zero Flag: " << zeroFlag(registers[desRegIndex]) << endl;
+    cout << "Negative Flag: " << negativeFlag(registers[desRegIndex]) << endl;
+    cout << "Carry Flag: " << carryFlagAdd(registers[desRegIndex], registers[sourceRegIndex], registers[op]) << endl;
+    cout << "Overflow Flag: " << overflowFlagAdd(registers[desRegIndex], registers[sourceRegIndex], registers[op]) << endl;
+    */
 }
 
 // SUB instruction implementation
@@ -160,10 +252,20 @@ void SUB(string destReg, string sourceReg, string operand, string registers[16])
     }
     registers[desRegIndex] = hexSub;
     printRegisters(registers);
+
+    // check flags
+    /*
+    cout << "Zero Flag: " << zeroFlag(registers[desRegIndex]) << endl;
+    cout << "Negative Flag: " << negativeFlag(registers[desRegIndex]) << endl;
+    cout << "Carry Flag: " << carryFlagSub(registers[desRegIndex], registers[sourceRegIndex], registers[op]) << endl;
+    cout << "Overflow Flag: " << overflowFlagSub(registers[desRegIndex], registers[sourceRegIndex], registers[op]) << endl;
+    */
 }
 
 // CMP instruction implementation
 void CMP(string destReg, string sourceReg, string operand, string registers[16]){
+    string desRegInd = destReg.substr(1);
+    int desRegIndex = stoi(desRegInd);
     int op = stoi(operand);
     string hexOp = decToHex(op);
     string sourceRegInd = sourceReg.substr(1);
@@ -175,6 +277,12 @@ void CMP(string destReg, string sourceReg, string operand, string registers[16])
         hexSub = "0" + hexSub;
     }
     cout << "CMP: " << hexSub << endl;
+
+    // check flags
+    cout << "Zero Flag: " << zeroFlag(sourceRegValue) << endl;
+    cout << "Negative Flag: " << negativeFlag(sourceRegValue) << endl;
+    cout << "Carry Flag: " << carryFlagSub(sourceRegValue, operand, registers[op]) << endl;
+    cout << "Overflow Flag: " << overflowFlagSub(registers[desRegIndex], sourceRegValue, operand) << endl; 
 }
 
 
@@ -324,7 +432,7 @@ int main(){
     string destReg[16], sourceReg[16];
     string registers[16];
     string genOpCode = "", decodedInstruct = "";
-    WORD instruction = 0xE1A00001;
+    WORD instruction = 0xEA00000;
     bool isRegister = false;
 
     string opCode[16];
@@ -349,7 +457,6 @@ int main(){
         destReg[i] = "r" + to_string(i);
         sourceReg[i] = "r" + to_string(i);
     }
-    //string temp = "";
 
     hexToBin(instruction, instruct_arr);
 
@@ -360,7 +467,6 @@ int main(){
     cout << endl;
 
     // extracting immediate bit from instruction
-
     if (instruct_arr[6] == 0){
         isRegister = true;
     }
@@ -405,7 +511,7 @@ int main(){
     printRegisters(registers);
 
     Decoder(genOpCode, destReg_str, sourceReg_str, operand_str, isRegister, registers);
-
+    
 }
 
 // E3A00001 MOV r0,#1
