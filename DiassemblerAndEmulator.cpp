@@ -14,6 +14,13 @@ WORD ram[KB_RAM>>2];		// The >>2 calculates KB / 4, since each WORD is 4 bytes i
 WORD programCounter;		// The program counter
 
 
+// populate ram
+void populateRam(){
+    for (size_t i = 0; i < sizeof(ram) / sizeof(ram[0]); i++) {
+        ram[i] = static_cast<WORD>(0);  // Each element is set 0
+    }
+}
+
 
 // function to convert hexadecimal to binary
 void hexToBin(WORD instruction, int instruct_arr[]){
@@ -291,7 +298,7 @@ void CMP(string destReg, string sourceReg, string operand, string registers[16])
 }
 
 
-void Decoder(string opCode, string destReg, string sourceReg, string operand, bool isRegister, string registers[16]){
+void DataProcessingInstruction(string opCode, string destReg, string sourceReg, string operand, bool isRegister, string registers[16]){
     string decodedInstruct = "";
     if (opCode == "AND"){
         //AND(destReg, sourceReg, operand);
@@ -462,14 +469,16 @@ void BAndBLImp(int BAndBLOffset[24], bool branchWithLink, string registers[16]){
     }
 }
 
-void singleDataTransfer(string destReg, string sourceReg, string offsett, bool preOrPostBit, bool upOrDownBit, bool byteOrWordBit, bool writeBackBit, bool loadOrStoreBit, string registers[16]){
+void singleDataTransfer(string destReg, string sourceReg, string offsett, bool preOrPostBit, bool upOrDownBit, bool byteOrWordBit, bool writeBackBit, bool loadOrStoreBit, string registers[16], bool isRegister){
+    WORD effectiveAddressWordValue;
+    WORD destRegWordValue;
     string desRegInd = destReg.substr(1);
     int desRegIndex = stoi(desRegInd);
     string sourceRegInd = sourceReg.substr(1);
     int sourceRegIndex = stoi(sourceRegInd);
     // Calculate Address
     string base = registers[sourceRegIndex];
-    string effectiveAddress;
+    string effectiveAddress = "";
     if (upOrDownBit){
         effectiveAddress = hexAddition(base, offsett);
     }
@@ -488,13 +497,13 @@ void singleDataTransfer(string destReg, string sourceReg, string offsett, bool p
     if (loadOrStoreBit){
         // load byte
         if (byteOrWordBit){
-            WORD effectiveAddressWordValue = static_cast<WORD>(std::stoul(effectiveAddress));
+            effectiveAddressWordValue = static_cast<WORD>(std::stoul(effectiveAddress));
             registers[desRegIndex] = ram[effectiveAddressWordValue / 4] & 0xff;
 
         }
         // load word
         else{
-            WORD effectiveAddressWordValue = static_cast<WORD>(std::stoul(effectiveAddress));
+            effectiveAddressWordValue = static_cast<WORD>(std::stoul(effectiveAddress));
             registers[desRegIndex] = ram[effectiveAddressWordValue / 4];
         }
     }
@@ -502,15 +511,15 @@ void singleDataTransfer(string destReg, string sourceReg, string offsett, bool p
     else {
         // store byte
         if (byteOrWordBit){
-            WORD effectiveAddressWordValue = static_cast<WORD>(std::stoul(effectiveAddress));
-            WORD destRegWordValue = static_cast<WORD>(std::stoul(registers[desRegIndex]));
+            effectiveAddressWordValue = static_cast<WORD>(std::stoul(effectiveAddress));
+            destRegWordValue = static_cast<WORD>(std::stoul(registers[desRegIndex]));
             ram[effectiveAddressWordValue / 4] = destRegWordValue & 0xff;
 
         }
         // store word
         else{
-            WORD effectiveAddressWordValue = static_cast<WORD>(std::stoul(effectiveAddress));
-            WORD destRegWordValue = static_cast<WORD>(std::stoul(registers[desRegIndex]));
+            effectiveAddressWordValue = static_cast<WORD>(std::stoul(effectiveAddress, nullptr, 16));
+            destRegWordValue = static_cast<WORD>(std::stoul(registers[desRegIndex], nullptr, 16));
             ram[effectiveAddressWordValue / 4] = destRegWordValue;
         }
     }
@@ -529,11 +538,22 @@ void singleDataTransfer(string destReg, string sourceReg, string offsett, bool p
     if (writeBackBit){
         registers[sourceRegIndex] = effectiveAddress;
     }
-    if (loadOrStoreBit){
-        cout << "LDR " << registers[desRegIndex] << "[ r" << destReg << " + " << effectiveAddress << " ]" << endl; 
+    if (!isRegister){
+        if (loadOrStoreBit){
+            cout << "LDR " << destReg << " [ " << sourceReg << " + " << effectiveAddress << " ]" << endl; 
+        }
+        else{
+            cout << "STR " << destReg << " [ " << sourceReg << " + " << effectiveAddress << " ]" << endl; 
+        }
     }
     else{
-        cout << "STR " << registers[desRegIndex] << "[ r" << destReg << " + " << effectiveAddress << " ]" << endl; 
+        if (loadOrStoreBit){
+            cout << "LDR " << destReg << " [ " << sourceReg << " + r" << offsett << " ]" << endl; 
+        }
+        else{
+            cout << "STR " << destReg << " [ " << sourceReg << " + r" << offsett << " ]" << endl; 
+        }
+    
     }
 }
 
@@ -546,7 +566,7 @@ int main(){
     string registers[16];
     int bAndBlOffset[24]; // for B and BL instructions
     string genOpCode = "", decodedInstruct = "";
-    WORD instruction = 0xE5900004;
+    WORD instruction = 0xE3A01002;
     programCounter = 0;
     bool isRegister = false;
 
@@ -581,11 +601,16 @@ int main(){
     opCode[14] = "BIC";
     opCode[15] = "MVN";
 
+    // populate ram
+    populateRam();
+
+    // initialize registers
     for (int i = 0; i < 16; i++){
         destReg[i] = "r" + to_string(i);
         sourceReg[i] = "r" + to_string(i);
     }
 
+    // hexadecimal instruction to binary
     hexToBin(instruction, instruct_arr);
 
     cout<<"hexadecimal to binary is: ";
@@ -648,9 +673,9 @@ int main(){
     }
 
     // checking if instruction is single data transfer instruction
-    if (!SWI && !branchOrSWI && !unSupInstr){
+    //if (!SWI && !branchOrSWI && !unSupInstr){
         singleDataBit = true;
-    }
+    //}
 
     // extracting single data transfer bits from instruction
     if (singleDataBit){
@@ -715,7 +740,7 @@ int main(){
     operand_str = to_string(binToDec(operand_arr, 12));
     genOpCode = opCode[binToDec(opCode_arr, 4)];
 
-    cout << "Genrated OpCode is: " << genOpCode << endl;
+    //cout << "Genrated OpCode is: " << genOpCode << endl;
 
     //cout << "Destination Register is: " << destReg_str << endl;
 
@@ -726,15 +751,13 @@ int main(){
     setRegisters(registers);
     printRegisters(registers);
 
-    //Decoder(genOpCode, destReg_str, sourceReg_str, operand_str, isRegister, registers);
+    DataProcessingInstruction(genOpCode, destReg_str, sourceReg_str, operand_str, isRegister, registers);
 
     //SWIImp(instruction, registers);
 
     //BAndBLImp(bAndBlOffset, branchWithLink, registers);
 
-    cout<< "hello: " << destReg_str<<endl;
-
-    singleDataTransfer(destReg_str, sourceReg_str, operand_str, preOrPostBit, upOrDownBit, byteOrWordBit, writeBackBit, loadOrStoreBit, registers);
+    //singleDataTransfer(destReg_str, sourceReg_str, operand_str, preOrPostBit, upOrDownBit, byteOrWordBit, writeBackBit, loadOrStoreBit, registers, isRegister);
 }
 
 // E3A00001 MOV r0,#1
@@ -772,3 +795,5 @@ int main(){
 // LDR r0, [r1, r2] 0xE7900002
 // STR r0, [r1, #4] 0xE5800004
 // STR r0, [r1, r2] 0xE7800002
+// LDR r0, [r1, r5] 0xE5900050
+// B 0xEA000000
