@@ -228,11 +228,10 @@ void MOV(string destReg, string operand, string registers[16]){
     }
     // Store the hexadecimal value in the destination register
     registers[desRegIndex] = hexVal;
-    printRegisters(registers);
 }
 
 // ADD instruction implementation
-void ADD(string destReg, string sourceReg, string operand, string registers[16]){
+void ADD(string destReg, string sourceReg, string operand, string registers[16], bool isRegister){
     // Convert the operand to integer
     int op = stoi(operand);
     // Convert the operand to hexadecimal
@@ -246,7 +245,13 @@ void ADD(string destReg, string sourceReg, string operand, string registers[16])
     // Get the value of the source register
     string sourceRegValue = registers[sourceRegIndex];
     // Perform the hexadecimal addition
-    string hexAdd = hexAddition(sourceRegValue, hexOp);
+    string hexAdd = "";
+    if (isRegister){
+        hexAdd = hexAddition(sourceRegValue, registers[op]);
+    }
+    else{
+        hexAdd = hexAddition(sourceRegValue, hexOp);
+    }
     string hexVal = "";
     // Pad the hexadecimal value with zeros
     for (int i = hexAdd.length(); i < 8; i++){
@@ -254,7 +259,6 @@ void ADD(string destReg, string sourceReg, string operand, string registers[16])
     }
     // Store the hexadecimal value in the destination register
     registers[desRegIndex] = hexAdd;
-    printRegisters(registers);
 
     // check flags
     /*
@@ -266,7 +270,7 @@ void ADD(string destReg, string sourceReg, string operand, string registers[16])
 }
 
 // SUB instruction implementation
-void SUB(string destReg, string sourceReg, string operand, string registers[16]){
+void SUB(string destReg, string sourceReg, string operand, string registers[16], bool isRegister){
     // Convert the operand to integer
     int op = stoi(operand);
     // Convert the operand to hexadecimal
@@ -280,7 +284,13 @@ void SUB(string destReg, string sourceReg, string operand, string registers[16])
     // Get the value of the source register
     string sourceRegValue = registers[sourceRegIndex];
     // Perform the hexadecimal subtraction
-    string hexSub = hexSubtraction(sourceRegValue, hexOp);
+    string hexSub = "";
+    if (isRegister){
+        hexSub = hexSubtraction(sourceRegValue, registers[op]);
+    }
+    else{
+        hexSub = hexSubtraction(sourceRegValue, hexOp);
+    }
     string hexVal = "";
     // Pad the hexadecimal value with zeros
     for (int i = hexSub.length(); i < 8; i++){
@@ -288,7 +298,6 @@ void SUB(string destReg, string sourceReg, string operand, string registers[16])
     }
     // Store the hexadecimal value in the destination register
     registers[desRegIndex] = hexSub;
-    printRegisters(registers);
 
     // check flags
     /*
@@ -354,7 +363,7 @@ void DataProcessingInstruction(string opCode, string destReg, string sourceReg, 
         else
             decodedInstruct = "SUB " + destReg + ", " + sourceReg + ", #" + operand;
         cout << "Decoded Instruction: " << decodedInstruct << endl;
-        SUB(destReg, sourceReg, operand, registers);
+        SUB(destReg, sourceReg, operand, registers, isRegister);
     }
     else if (opCode == "RSB"){
         //RSB(destReg, sourceReg, operand);
@@ -371,7 +380,7 @@ void DataProcessingInstruction(string opCode, string destReg, string sourceReg, 
         else
             decodedInstruct = "ADD " + destReg + ", " + sourceReg + ", #" + operand;
         cout << "Decoded Instruction: " << decodedInstruct << endl;
-        ADD(destReg, sourceReg, operand, registers);
+        ADD(destReg, sourceReg, operand, registers, isRegister);
     }
     else if (opCode == "ADC"){
         //ADC(destReg, sourceReg, operand);
@@ -469,6 +478,7 @@ void DataProcessingInstruction(string opCode, string destReg, string sourceReg, 
     for (int i = registers[PC].length(); i < 8; i++){
         registers[PC] = "0" + registers[PC];
     }
+    printRegisters(registers);
     if (isPC(destReg)){
         timeCycle += 3;
     }
