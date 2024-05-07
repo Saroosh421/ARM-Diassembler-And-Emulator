@@ -745,131 +745,138 @@ int main(){
         sourceReg[i] = "r" + to_string(i);
     }
 
-    // prompt instruction from user
-    cout << "Enter the instruction in hexadecimal: ";
-    cin >> hex >> instruction;
+    while (true){
+        // prompt instruction from user
+        cout << "Enter 0 to exit!" << endl;
+        cout << "Enter the instruction in hexadecimal: ";
+        cin >> hex >> instruction;
 
-    // hexadecimal instruction to binary
-    hexToBin(instruction, instruct_arr);
+        if(instruction == 0){
+            break;
+        }
 
-    cout<<"hexadecimal to binary is: ";
-    for (int i = 0; i < 32; i++){
-        cout << instruct_arr[i];
-    }
-    cout << endl;
+        // hexadecimal instruction to binary
+        hexToBin(instruction, instruct_arr);
 
-    // extracting b and bl offset bits
-    for (int i = 0, j = 8; i < 24; i++, j++){
-        bAndBlOffset[i] = instruct_arr[j];
-    }
+        cout<<"hexadecimal to binary is: ";
+        for (int i = 0; i < 32; i++){
+            cout << instruct_arr[i];
+        }
+        cout << endl;
 
-    // extracting branch with link bit from instruction
-    if (instruct_arr[7] == 1){
-        branchWithLink = true;
-    }
-    else{
-        branchWithLink = false;
-    }
+        // extracting b and bl offset bits
+        for (int i = 0, j = 8; i < 24; i++, j++){
+            bAndBlOffset[i] = instruct_arr[j];
+        }
 
-    // extracting immediate bit from instruction
-    if (instruct_arr[6] == 0){
-        isRegister = true;
-    }
-    else{
-        isRegister = false;
-    }
+        // extracting branch with link bit from instruction
+        if (instruct_arr[7] == 1){
+            branchWithLink = true;
+        }
+        else{
+            branchWithLink = false;
+        }
 
-    // extracting branch or SWI bit from instruction
-    if (instruct_arr[4] == 1){
-        branchOrSWI = true;
-    }
-    else{
-        branchOrSWI = false;
-    }
+        // extracting immediate bit from instruction
+        if (instruct_arr[6] == 0){
+            isRegister = true;
+        }
+        else{
+            isRegister = false;
+        }
 
-    // extracting unSupported instruction bit from instruction
-    if (instruct_arr[6] == 1){
-        unSupInstr = false;
-    }
-    else{
-        unSupInstr = true;
-    }
+        // extracting branch or SWI bit from instruction
+        if (instruct_arr[4] == 1){
+            branchOrSWI = true;
+        }
+        else{
+            branchOrSWI = false;
+        }
 
-    // extracting SWI bit from instruction
-    if (instruct_arr[5] == 1){
-        SWI = true;
-    }
-    else{
-        SWI = false;
-    }
+        // extracting unSupported instruction bit from instruction
+        if (instruct_arr[6] == 1){
+            unSupInstr = false;
+        }
+        else{
+            unSupInstr = true;
+        }
 
-    // cheching if instruction is branch instruction
-    if (!SWI && branchOrSWI && !unSupInstr){
-        branch = true;
-    }
-    else{
-        branch = false;
-    }
+        // extracting SWI bit from instruction
+        if (instruct_arr[5] == 1){
+            SWI = true;
+        }
+        else{
+            SWI = false;
+        }
 
-    // checking if instruction is single data transfer instruction
-    if (instruct_arr[5] == 1){
-        singleDataBit = true;
-    }
-    else{
-        singleDataBit = false;
-    }
+        // cheching if instruction is branch instruction
+        if (!SWI && branchOrSWI && !unSupInstr){
+            branch = true;
+        }
+        else{
+            branch = false;
+        }
 
-    // extracting opCode from instruction
-    for (int i = 0, j = 7; i < 4; i++, j++){
-        opCode_arr[i] = instruct_arr[j];
-    }
+        // checking if instruction is single data transfer instruction
+        if (instruct_arr[5] == 1){
+            singleDataBit = true;
+        }
+        else{
+            singleDataBit = false;
+        }
 
-    // extracting destination register from instruction
-    for (int i = 0, j = 16; i < 4; i++, j++){
-        destReg_arr[i] = instruct_arr[j];
-    }
+        // extracting opCode from instruction
+        for (int i = 0, j = 7; i < 4; i++, j++){
+            opCode_arr[i] = instruct_arr[j];
+        }
 
-    // extracting source register instruction
-    for (int i = 0, j = 12; i < 4; i++, j++){
-        sourceReg_arr[i] = instruct_arr[j];
-    }
+        // extracting destination register from instruction
+        for (int i = 0, j = 16; i < 4; i++, j++){
+            destReg_arr[i] = instruct_arr[j];
+        }
 
-    // extracting operand from instruction
-    for (int i = 0, j = 20; i < 12; i++, j++){
-        operand_arr[i] = instruct_arr[j];
-    }
+        // extracting source register instruction
+        for (int i = 0, j = 12; i < 4; i++, j++){
+            sourceReg_arr[i] = instruct_arr[j];
+        }
 
-    // retrieving values of destination register, source register and operand
-    destReg_str = destReg[binToDec(destReg_arr, 4)];
-    sourceReg_str = sourceReg[binToDec(sourceReg_arr, 4)];
-    operand_str = to_string(binToDec(operand_arr, 12));
-    genOpCode = opCode[binToDec(opCode_arr, 4)];
+        // extracting operand from instruction
+        for (int i = 0, j = 20; i < 12; i++, j++){
+            operand_arr[i] = instruct_arr[j];
+        }
 
-    setRegisters(registers);
-    printRegisters(registers);
+        // retrieving values of destination register, source register and operand
+        destReg_str = destReg[binToDec(destReg_arr, 4)];
+        sourceReg_str = sourceReg[binToDec(sourceReg_arr, 4)];
+        operand_str = to_string(binToDec(operand_arr, 12));
+        genOpCode = opCode[binToDec(opCode_arr, 4)];
 
-    // Checking varitions of instructions
-    if (branchOrSWI){
-        if(!unSupInstr){
-            if(SWI){
-                SWIImp(instruction, registers, timeCycle);
+        setRegisters(registers);
+        printRegisters(registers);
+
+        // Checking varitions of instructions
+        if (branchOrSWI){
+            if(!unSupInstr){
+                if(SWI){
+                    SWIImp(instruction, registers, timeCycle);
+                }
+                else {
+                    BAndBLImp(bAndBlOffset, branchWithLink, registers, timeCycle);
+                }
             }
-            else {
-                BAndBLImp(bAndBlOffset, branchWithLink, registers, timeCycle);
+            else{
+                timeCycle += 1;
+                cout << "Unsupported Instruction!" << endl;
+                cout << "Updated time cycle: " << timeCycle << endl;
             }
         }
         else{
-            timeCycle += 1;
-            cout << "Unsupported Instruction!" << endl;
-            cout << "Updated time cycle: " << timeCycle << endl;
-        }
-    }
-    else{
-        if(singleDataBit){
-            singleDataTransfer(instruct_arr, destReg_str, sourceReg_str, operand_str, preOrPostBit, upOrDownBit, byteOrWordBit, writeBackBit, loadOrStoreBit, registers, isRegister, timeCycle);
-        }
-        else{
-            DataProcessingInstruction(genOpCode, destReg_str, sourceReg_str, operand_str, isRegister, registers, timeCycle);
+            if(singleDataBit){
+                singleDataTransfer(instruct_arr, destReg_str, sourceReg_str, operand_str, preOrPostBit, upOrDownBit, byteOrWordBit, writeBackBit, loadOrStoreBit, registers, isRegister, timeCycle);
+            }
+            else{
+                DataProcessingInstruction(genOpCode, destReg_str, sourceReg_str, operand_str, isRegister, registers, timeCycle);
+            }
         }
     }
 }
