@@ -188,10 +188,12 @@ bool overflowFlagSub(string destReg, string sourceReg, string operand){
 }
 
 // function to set initialize values of register
-void setRegisters(string registers[15]){
-    for (int i = 0; i < 16; i++){
+void setRegisters(string registers[16]){
+    for (int i = 0; i < 14; i++){
         registers[i] = "00000000";
     }
+    registers[14] = "00010000";
+    registers[15] = "00000100";
 }
 
 // function to print content of registers
@@ -201,6 +203,13 @@ void printRegisters(string registers[15]){
         cout << "r" << i << ": " << registers[i] << endl;
     }
     cout << endl;
+}
+
+// check if regDest is PC
+bool isPC(string regDest){
+    if (regDest == "r15")
+        return true;
+    return false;
 }
 
 // MOV instruction implementation
@@ -320,7 +329,7 @@ void CMP(string destReg, string sourceReg, string operand, string registers[16])
 }
 
 // Data Processing Instructions
-void DataProcessingInstruction(string opCode, string destReg, string sourceReg, string operand, bool isRegister, string registers[16]){
+void DataProcessingInstruction(string opCode, string destReg, string sourceReg, string operand, bool isRegister, string registers[16], int timeCycle){
     string decodedInstruct = "";
     if (opCode == "AND"){
         //AND(destReg, sourceReg, operand);
@@ -454,7 +463,13 @@ void DataProcessingInstruction(string opCode, string destReg, string sourceReg, 
             decodedInstruct = "MVN " + destReg + ", #" + operand;
         cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
-
+    if (isPC(destReg)){
+        timeCycle += 3;
+    }
+    else{
+        timeCycle += 1;
+    }
+    cout << "Updated time cycle: " << timeCycle << endl;
 }
 
 // Fetch the next instruction based on the program counter
@@ -465,7 +480,7 @@ WORD fetchNextInstruction() {
 }
 
 // SWI instruction implementation
-void SWIImp(WORD instruction ,string registers[16]){
+void SWIImp(WORD instruction ,string registers[16], int timeCycle){
     // Link Register (commonly used to store return address)
     // cast the string to WORD
     WORD reg14 = static_cast<WORD>(stoul(registers[14]));
@@ -476,32 +491,50 @@ void SWIImp(WORD instruction ,string registers[16]){
     // Extract the SWI code
     WORD interruptCode = instruction & 0x00FFFFFF;
     cout << "SWI #" << hex << interruptCode << endl;
+    timeCycle += 5;
+    cout << "Updated time cycle: " << timeCycle << endl;
 }
 
-void BAndBLImp(int BAndBLOffset[24], bool branchWithLink, string registers[16]){
-    // If it's a branch with link, save the next instruction address in the link register (LR) i.e. r14
-    if (branchWithLink) {
-        programCounter = 15;
-        // Save the return address in the link register
-        string PC = decToHex(programCounter);
-        // Next instruction address
-        string nextIns = "4";
-        // link register
-        int LR = 14;
+void BAndBLImp(int BAndBLOffset[24], bool branchWithLink, string registers[16], int timeCycle){
+    int PC = 15;
+    string hex_val = "";
+    // Save the return address in the link register
+    string programCounter = registers[PC];
+    // Next instruction address
+    string nextIns = "4", add_val = "1";
+    // link register
+    int LR = 14;
 
-        if (branchWithLink){
-            registers[LR] = hexAddition(PC, nextIns); // Save the return address in the link register
-        }
-        // Update the program counter to the target address
-        int BAndBLOffsetVal = binToDec(BAndBLOffset, 24);
-        programCounter = programCounter + BAndBLOffsetVal;
-        cout << "After b/bl instruction, the program counter is: " << registers[programCounter] << endl;
-        cout << "Link Register is: " << registers[LR] << endl;
+    if (branchWithLink){
+        registers[LR] = hexAddition(registers[PC], nextIns); // Save the return address in the link register
     }
+    for (int i = registers[LR].length(); i < 8; i++){
+        registers[LR] = "0" + registers[LR];
+    }
+    // Update the program counter to the target address
+    int BAndBLOffsetVal = binToDec(BAndBLOffset, 24);
+    //programCounter = programCounter + BAndBLOffsetVal;
+    for (int i = 0; i < BAndBLOffsetVal*4 ; i++){
+        programCounter = hexAddition(programCounter, add_val);
+    }
+    for (int i = programCounter.length(); i < 8; i++){
+        programCounter = "0" + programCounter;
+    }
+    registers[PC] = programCounter;
+    if (branchWithLink){
+        cout << "After bl instruction, the program counter is at: " << registers[PC] << endl;
+        cout << "Link Register stored the address: " << registers[LR] << endl;
+    }
+    else{
+        cout << "After b instruction, the program counter is at: " << programCounter << endl;
+    }
+    timeCycle += 3;
+    cout << "Updated time cycle: " << timeCycle << endl;
+    printRegisters(registers);
 }
 
 // Single Data Transfer Instruction
-void singleDataTransfer(int instruct_arr[32], string destReg, string sourceReg, string offsett, bool preOrPostBit, bool upOrDownBit, bool byteOrWordBit, bool writeBackBit, bool loadOrStoreBit, string registers[16], bool isRegister){
+void singleDataTransfer(int instruct_arr[32], string destReg, string sourceReg, string offsett, bool preOrPostBit, bool upOrDownBit, bool byteOrWordBit, bool writeBackBit, bool loadOrStoreBit, string registers[16], bool isRegister, int timeCycle){
     WORD effectiveAddressWordValue, destRegWordValue;
     // Determine the destination register index
     string desRegInd = destReg.substr(1);
@@ -623,21 +656,38 @@ void singleDataTransfer(int instruct_arr[32], string destReg, string sourceReg, 
     if (isRegister){
         // Check if it is load or store
         if (loadOrStoreBit){
-            cout << "LDR " << destReg << " [ " << sourceReg << " + #" << effectiveAddress << " ]" << endl; 
+            if (isPC(destReg)){
+                timeCycle += 5;
+            }
+            else{
+                timeCycle += 3;
+            }
+            cout << "LDR " << destReg << " [ " << sourceReg << " + #" << effectiveAddress << " ]" << endl;
+            cout << "Updated time cycle: " << timeCycle << endl; 
         }
         else{
-            cout << "STR " << destReg << " [ " << sourceReg << " + #" << effectiveAddress << " ]" << endl; 
+            timeCycle += 2;
+            cout << "STR " << destReg << " [ " << sourceReg << " + #" << effectiveAddress << " ]" << endl;
+            cout << "Updated time cycle: " << timeCycle << endl; 
         }
     }
     else{
         // Check if it is load or store
         if (loadOrStoreBit){
-            cout << "LDR " << destReg << " [ " << sourceReg << " + r" << offsett << " ]" << endl; 
+            if (isPC(destReg)){
+                timeCycle += 5;
+            }
+            else{
+                timeCycle += 3;
+            }
+            cout << "LDR " << destReg << " [ " << sourceReg << " + r" << offsett << " ]" << endl;
+            cout << "Updated time cycle: " << timeCycle << endl; 
         }
         else{
-            cout << "STR " << destReg << " [ " << sourceReg << " + r" << offsett << " ]" << endl; 
+            timeCycle += 2;
+            cout << "STR " << destReg << " [ " << sourceReg << " + r" << offsett << " ]" << endl;
+            cout << "Updated time cycle: " << timeCycle << endl; 
         }
-    
     }
 }
 
@@ -656,23 +706,10 @@ int main(){
     int bAndBlOffset[24];
     // variables to store generated op code, decoded instruction
     string genOpCode = "", decodedInstruct = "";
-    WORD instruction = 0xE5900005;
-    // MOV r0,#1 0xE3A00001
-    // MOV r1,#2 0xE3A01002
-    // ADD r2,r0,r1 0xE0802001
-    // ADD r2,r2,#5 0xE2822005
-    // ADD r2, r2, 15 0xE282200F
-    // SUB r3, r3, 1 0xE2433001
-    // SUB r3, r2, r1 0xE2423001
-    // B 0xEA000000
-    // BL 0xEB000000
-    // SWI 0xEF000000
-    // LDR r0, [r1, #4] 0xE5900004
-    // LDR r0, [r1, r2] 0xE7900002
-    // STR r0, [r1, #4] 0xE5800004
-    // STR r0, [r1, r2] 0xE7800002
-    // LDR r0, [r1, r5] 0xE5900005
+    WORD instruction;
     programCounter = 0;
+    // time cycle for instruction
+    int timeCycle = 0;
     // flag for immediate or register
     bool isRegister = false;
     // flags for different types of instructions
@@ -707,6 +744,10 @@ int main(){
         destReg[i] = "r" + to_string(i);
         sourceReg[i] = "r" + to_string(i);
     }
+
+    // prompt instruction from user
+    cout << "Enter the instruction in hexadecimal: ";
+    cin >> hex >> instruction;
 
     // hexadecimal instruction to binary
     hexToBin(instruction, instruct_arr);
@@ -778,11 +819,6 @@ int main(){
         singleDataBit = false;
     }
 
-    // extracting single data transfer bits from instruction
-    if (singleDataBit){
-        
-    }
-
     // extracting opCode from instruction
     for (int i = 0, j = 7; i < 4; i++, j++){
         opCode_arr[i] = instruct_arr[j];
@@ -816,22 +852,24 @@ int main(){
     if (branchOrSWI){
         if(!unSupInstr){
             if(SWI){
-                SWIImp(instruction, registers);
+                SWIImp(instruction, registers, timeCycle);
             }
             else {
-                BAndBLImp(bAndBlOffset, branchWithLink, registers);
+                BAndBLImp(bAndBlOffset, branchWithLink, registers, timeCycle);
             }
         }
         else{
-            cout << "Unsupported Instruction" << endl;
+            timeCycle += 1;
+            cout << "Unsupported Instruction!" << endl;
+            cout << "Updated time cycle: " << timeCycle << endl;
         }
     }
     else{
         if(singleDataBit){
-            singleDataTransfer(instruct_arr, destReg_str, sourceReg_str, operand_str, preOrPostBit, upOrDownBit, byteOrWordBit, writeBackBit, loadOrStoreBit, registers, isRegister);
+            singleDataTransfer(instruct_arr, destReg_str, sourceReg_str, operand_str, preOrPostBit, upOrDownBit, byteOrWordBit, writeBackBit, loadOrStoreBit, registers, isRegister, timeCycle);
         }
         else{
-            DataProcessingInstruction(genOpCode, destReg_str, sourceReg_str, operand_str, isRegister, registers);
+            DataProcessingInstruction(genOpCode, destReg_str, sourceReg_str, operand_str, isRegister, registers, timeCycle);
         }
     }
 }
