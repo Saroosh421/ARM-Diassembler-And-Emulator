@@ -329,7 +329,7 @@ void CMP(string destReg, string sourceReg, string operand, string registers[16])
 }
 
 // Data Processing Instructions
-void DataProcessingInstruction(string opCode, string destReg, string sourceReg, string operand, bool isRegister, string registers[16], int timeCycle){
+void DataProcessingInstruction(string opCode, string destReg, string sourceReg, string operand, bool isRegister, string registers[16], int &timeCycle){
     string decodedInstruct = "";
     if (opCode == "AND"){
         //AND(destReg, sourceReg, operand);
@@ -480,7 +480,7 @@ WORD fetchNextInstruction() {
 }
 
 // SWI instruction implementation
-void SWIImp(WORD instruction ,string registers[16], int timeCycle){
+void SWIImp(WORD instruction ,string registers[16], int &timeCycle){
     // Link Register (commonly used to store return address)
     // cast the string to WORD
     WORD reg14 = static_cast<WORD>(stoul(registers[14]));
@@ -495,7 +495,7 @@ void SWIImp(WORD instruction ,string registers[16], int timeCycle){
     cout << "Updated time cycle: " << timeCycle << endl;
 }
 
-void BAndBLImp(int BAndBLOffset[24], bool branchWithLink, string registers[16], int timeCycle){
+void BAndBLImp(int BAndBLOffset[24], bool branchWithLink, string registers[16], int &timeCycle){
     int PC = 15;
     string hex_val = "";
     // Save the return address in the link register
@@ -534,7 +534,7 @@ void BAndBLImp(int BAndBLOffset[24], bool branchWithLink, string registers[16], 
 }
 
 // Single Data Transfer Instruction
-void singleDataTransfer(int instruct_arr[32], string destReg, string sourceReg, string offsett, bool preOrPostBit, bool upOrDownBit, bool byteOrWordBit, bool writeBackBit, bool loadOrStoreBit, string registers[16], bool isRegister, int timeCycle){
+void singleDataTransfer(int instruct_arr[32], string destReg, string sourceReg, string offsett, bool preOrPostBit, bool upOrDownBit, bool byteOrWordBit, bool writeBackBit, bool loadOrStoreBit, string registers[16], bool isRegister, int &timeCycle){
     WORD effectiveAddressWordValue, destRegWordValue;
     // Determine the destination register index
     string desRegInd = destReg.substr(1);
@@ -739,6 +739,9 @@ int main(){
     // populate ram
     populateRam();
 
+    // initialize register values
+    setRegisters(registers);
+
     // initialize registers
     for (int i = 0; i < 16; i++){
         destReg[i] = "r" + to_string(i);
@@ -851,7 +854,6 @@ int main(){
         operand_str = to_string(binToDec(operand_arr, 12));
         genOpCode = opCode[binToDec(opCode_arr, 4)];
 
-        setRegisters(registers);
         printRegisters(registers);
 
         // Checking varitions of instructions
