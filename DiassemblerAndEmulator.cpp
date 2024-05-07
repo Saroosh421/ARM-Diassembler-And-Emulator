@@ -319,7 +319,7 @@ void CMP(string destReg, string sourceReg, string operand, string registers[16])
     for (int i = hexSub.length(); i < 8; i++){
         hexSub = "0" + hexSub;
     }
-    cout << "CMP: " << hexSub << endl;
+    //cout << "CMP: " << hexSub << endl;
 
     // check flags
     cout << "Zero Flag: " << zeroFlag(sourceRegValue) << endl;
@@ -463,6 +463,12 @@ void DataProcessingInstruction(string opCode, string destReg, string sourceReg, 
             decodedInstruct = "MVN " + destReg + ", #" + operand;
         cout << "Decoded Instruction: " << decodedInstruct << endl;
     }
+    string upPC = "4";
+    int PC = 15;
+    registers[PC] = hexAddition(registers[PC], upPC);
+    for (int i = registers[PC].length(); i < 8; i++){
+        registers[PC] = "0" + registers[PC];
+    }
     if (isPC(destReg)){
         timeCycle += 3;
     }
@@ -493,6 +499,12 @@ void SWIImp(WORD instruction ,string registers[16], int &timeCycle){
     cout << "SWI #" << hex << interruptCode << endl;
     timeCycle += 5;
     cout << "Updated time cycle: " << timeCycle << endl;
+    string upPC = "4";
+    int PC = 15;
+    registers[PC] = hexAddition(registers[PC], upPC);
+    for (int i = registers[PC].length(); i < 8; i++){
+        registers[PC] = "0" + registers[PC];
+    }
 }
 
 void BAndBLImp(int BAndBLOffset[24], bool branchWithLink, string registers[16], int &timeCycle){
@@ -689,6 +701,12 @@ void singleDataTransfer(int instruct_arr[32], string destReg, string sourceReg, 
             cout << "Updated time cycle: " << timeCycle << endl; 
         }
     }
+    string upPC = "4";
+    int PC = 15;
+    registers[PC] = hexAddition(registers[PC], upPC);
+    for (int i = registers[PC].length(); i < 8; i++){
+        registers[PC] = "0" + registers[PC];
+    }
 }
 
 int main(){
@@ -882,44 +900,3 @@ int main(){
         }
     }
 }
-
-
-// E1 A0 00 02 MOV r0,#2
-// E1 A0 10 03 MOV r1,#3
-// E0 80 20 01 ADD r2,r0,r1
-// E2 82 20 05 ADD r2,r2,#5
-// E1 A0 00 02 MOV r0,#2
-// E1 A0 10 03 MOV r1,#3
-// E0 80 20 01 ADD r2,r0,r1
-// E2 82 20 05 ADD r2,r2,#5
-// E1 A0 00 02 MOV r0,#2
-// E1 A0 10 03 MOV r1,#3
-// E0 80 20 01 ADD r2,r0,r1
-// MOV r0, r1 0xE1A00001
-// MOV r2, 4 0xE3A02004
-// SUB r2, r2, 1 0xE2412001
-// ADD r2, r2, 15 0xE282200F
-// SUB r3, r3, 1 0xE2433001
-// SUB r3, r2, r1 0xE2423001
-// CMP r2, r1 0xE1520001
-// CMP r0, r1 0xE1500001
-// CMP r1, r2 0xE1521002
-// CMP r2, 1 0xE3522001
-// CMP r1, 2 0xE3521002
-// CMP r0, 15 0xE350000F
-// B and BL instructions
-// MOV r0,#1 0xE3A00001
-// MOV r1,#2 0xE3A01002
-// ADD r2,r0,r1 0xE0802001
-// ADD r2,r2,#5 0xE2822005
-// ADD r2, r2, 15 0xE282200F
-// SUB r3, r3, 1 0xE2433001
-// SUB r3, r2, r1 0xE2423001
-// B 0xEA000000
-// BL 0xEB000000
-// SWI 0xEF000000
-// LDR r0, [r1, #4] 0xE5900004
-// LDR r0, [r1, r2] 0xE7900002
-// STR r0, [r1, #4] 0xE5800004
-// STR r0, [r1, r2] 0xE7800002
-// LDR r0, [r1, r5] 0xE5900050
