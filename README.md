@@ -1,4 +1,4 @@
-# CPU Emulator Project
+# ARM Processor Disassembler and Emulator
 
 ## Overview
 
